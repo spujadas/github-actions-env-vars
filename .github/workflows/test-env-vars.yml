@@ -1,0 +1,64 @@
+name: test env vars
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test-env-vars:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: fix permissions
+        run: chmod +x *.sh
+
+      - name: print env vars
+        run: ./print-env-vars.sh
+
+      - name: change env var from workflow (not persisted to next step)
+        run: ./print-env-vars.sh
+        env:
+          BAR: goodbye
+      
+      - name: print env vars
+        run: ./print-env-vars.sh
+
+      - name: change env var from script (not persisted to next step)
+        run: |
+          source set-env-var.sh
+          ./print-env-vars.sh
+
+      - name: print env vars
+        run: ./print-env-vars.sh
+
+      - name: show message if workflow can sees env var as set
+        if: env.FOO == 'hello'
+        run: |
+          echo "workflow sees FOO == 'hello'"
+          ./print-env-vars.sh
+
+      - name: change env var from workflow (persisted to next step)
+        run: |
+          ./print-env-vars.sh
+          echo "BAR=${BAR}" >> $GITHUB_ENV
+        env:
+          BAR: goodbye
+      
+      - name: print env vars
+        run: ./print-env-vars.sh
+
+      - name: change env var from script (persisted to next step)
+        run: |
+          source set-env-var.sh
+          ./print-env-vars.sh
+          echo "FOO=${FOO}" >> $GITHUB_ENV
+
+      - name: print env vars
+        run: ./print-env-vars.sh
+
+      - name: show message if workflow sees FOO env var as set
+        if: env.FOO == 'hello'
+        run: |
+          echo "workflow sees FOO == 'hello'"
+          ./print-env-vars.sh
+
